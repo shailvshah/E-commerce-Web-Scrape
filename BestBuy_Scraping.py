@@ -122,62 +122,14 @@ def getProductLinks(soup, total_pages,page_url, header):
     return productlinks
 
 
-        
-        
-    
-
-if __name__ == "__main__":
-    page_url = 'https://www.bestbuy.com/site/tvs/65-inch-tvs/pcmcat1514910447059.c?id=pcmcat1514910447059'
-    header = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'}
-    html = requests.get(page_url, headers = header, timeout=5 )                 #timeouts argument can be avoided!
-    total_pages = 1
-    
-    soup = BeautifulSoup(html.content, 'html.parser')
-    
-    #calc. total no. of items
-    con = soup.findAll("div", {"class":"left-side"})
-    for c in con:
-        pcount = re.findall(r'-\d+',c.text)
-        pcount = re.findall(r'\d+',str(pcount))
-        pcount = int(*pcount)
-    
-    #calc total no. of pages!
-    conn = soup.findAll("div", {"class":"banner-middle-column"})
-    for c in conn:
-        icount = re.findall(r'\d+',c.text)
-        icount = int(*icount)
-    total_pages = (icount//pcount)+1
-    
-    productlinks = getProductLinks(soup,total_pages,page_url,header)            #store product links
-    
-    removetable = str.maketrans('','','\'][')                                   #helper for transformations of current and original price str into float
-
-    titles = []
-    skuid = []
-    modelno = []
-    currentprice = []
-    actualprice = []
-    ratings_count = []
-    for product in productlinks:                                                #find all details per product one by one!
-        page_url = 'https://www.bestbuy.com/'+str(product)
-        html = requests.get(page_url, headers = header)
-        soup = BeautifulSoup(html.content, 'html.parser')
-        titles.append(getTitles(soup))
-        skuid.append(getSKUID(soup))
-        modelno.append(getModelNo(soup))
-        ratings_count.append(getRating_Count(soup))
-        currentprice.append(getCurrentPrice(soup))
-        actualprice.append(getOriginalPrice(soup))
-        
-                
-            
-    
-    #transform the result from above to further push into data frame for future manipulations!
+def doTransform(currentprice, actualprice, ratings_count):
     star5 = []
     star4 = []
     star3 = []
     star2 = []
     star1 = []
+    removetable = str.maketrans('','','\'][')                                   #helper for transformations of current and original price str into float
+
     for r in ratings_count:
         if r == '0.0':                                                          #if no reviews all stars will be 0.0
                 star5.append('0')
@@ -221,6 +173,61 @@ if __name__ == "__main__":
     currentprice = [float(i) for i in currentprice]
     actualprice = [s.translate(removetable) for s in actualprice]
     actualprice = [float(i) for i in actualprice]   
+    
+    return currentprice,actualprice,star5,star4,star3,star2,star1
+    
+
+        
+        
+    
+
+if __name__ == "__main__":
+    page_url = 'https://www.bestbuy.com/site/tvs/65-inch-tvs/pcmcat1514910447059.c?id=pcmcat1514910447059'
+    header = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'}
+    html = requests.get(page_url, headers = header, timeout=5 )                 #timeouts argument can be avoided!
+    total_pages = 1
+    
+    soup = BeautifulSoup(html.content, 'html.parser')
+    
+    #calc. total no. of items
+    con = soup.findAll("div", {"class":"left-side"})
+    for c in con:
+        pcount = re.findall(r'-\d+',c.text)
+        pcount = re.findall(r'\d+',str(pcount))
+        pcount = int(*pcount)
+    
+    #calc total no. of pages!
+    conn = soup.findAll("div", {"class":"banner-middle-column"})
+    for c in conn:
+        icount = re.findall(r'\d+',c.text)
+        icount = int(*icount)
+    total_pages = (icount//pcount)+1
+    
+    productlinks = getProductLinks(soup,total_pages,page_url,header)            #store product links
+    
+    
+    titles = []
+    skuid = []
+    modelno = []
+    currentprice = []
+    actualprice = []
+    ratings_count = []
+    for product in productlinks:                                                #find all details per product one by one!
+        page_url = 'https://www.bestbuy.com/'+str(product)
+        html = requests.get(page_url, headers = header)
+        soup = BeautifulSoup(html.content, 'html.parser')
+        titles.append(getTitles(soup))
+        skuid.append(getSKUID(soup))
+        modelno.append(getModelNo(soup))
+        ratings_count.append(getRating_Count(soup))
+        currentprice.append(getCurrentPrice(soup))
+        actualprice.append(getOriginalPrice(soup))
+        
+                    
+    #transform the result from above to further push into data frame for future manipulations!
+    currentprice,actualprice,star5,star4,star3,star2,star1 = doTransform(currentprice,actualprice,ratings_count)
+    
+    
             
 
     
