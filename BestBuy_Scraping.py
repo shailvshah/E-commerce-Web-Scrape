@@ -280,25 +280,50 @@ if __name__ == "__main__":
             
     if r_tot_pages>1:
         timestamp = []
+        reviews = []
+        helpful = []
+        unhelpful = []
         for i in range(r_tot_pages):
             i = i+1
             #first page is base url
             if i == 1:
-                con = soup.findAll("div",{"class":"disclaimer"})
+                con = soup.findAll("div", {"class":"ugc-review-body body-copy-lg"})
                 for c in con:
-                    if c.get('title') == None:
-                        continue
-                    timestamp.append(c.get('title'))
+                    reviews.append(c.text)
+                con = soup.findAll("div",{"class":"review-context"})
+                for c in con:
+                    timestamp.append(c.time['title'])
+                con = soup.findAll("button",{"class":"btn btn-outline btn-sm helpfulness-button no-margin-l"})
+                for c in con:
+                    dummy = c.text
+                    dummy = dummy.split(' ')[-1]
+                    helpful.append(int(re.search(r'\d+',str(dummy)).group()))
+                con = soup.findAll("button",{"class":"btn-default-link link neg-feedback"})
+                for c in con:
+                    dummy = c.text
+                    dummy = dummy.split(' ')[-1]
+                    unhelpful.append(int(re.search(r'\d+',str(dummy)).group()))
             else:
-                page_url_review = 'https://www.bestbuy.com/site/sony-65-class-led-x850g-series-2160p-smart-4k-uhd-tv-with-hdr/6356395.p?skuId=6356395?variant=A&sort=MOST_RECENT&page='+str(i)
-                html = requests.get(page_url, headers = header, timeout=5 )
+                page_url_review = 'https://www.bestbuy.com/site/reviews/sony-65-class-led-x850g-series-2160p-smart-4k-uhd-tv-with-hdr/6356395?variant=A&sort=MOST_RECENT&page='+str(i)
+                html = requests.get(page_url_review, headers = header, timeout=5 )
                 #create new soup object for new url and scrape
                 soup = BeautifulSoup(html.content, 'html.parser')
-                con = soup.findAll("div",{"class":"disclaimer"})
+                con = soup.findAll("div", {"class":"ugc-review-body body-copy-lg"})
                 for c in con:
-                    if c.get('title') == None:
-                        continue
-                    timestamp.append(c.get('title'))
+                    reviews.append(c.text)
+                con = soup.findAll("div",{"class":"review-context"})
+                for c in con:
+                    timestamp.append(c.time['title'])
+                con = soup.findAll("button",{"class":"btn btn-outline btn-sm helpfulness-button no-margin-l"})
+                for c in con:
+                    dummy = c.text
+                    dummy = dummy.split(' ')[-1]
+                    helpful.append(int(re.search(r'\d+',str(dummy)).group()))
+                con = soup.findAll("button",{"class":"btn-default-link link neg-feedback"})
+                for c in con:
+                    dummy = c.text
+                    dummy = dummy.split(' ')[-1]
+                    unhelpful.append(int(re.search(r'\d+',str(dummy)).group()))
     else:
         con = soup.findAll("div", {"class":"ugc-review-body body-copy-lg"})
         for c in con:
