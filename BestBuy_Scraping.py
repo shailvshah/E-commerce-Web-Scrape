@@ -128,7 +128,7 @@ def getReviews(page_url,k,modelname,sid):
     html = requests.get(page_url, headers = header)                 
     soup = BeautifulSoup(html.content, 'html.parser')
     
-    print('\n\n\n Writing into reviews for product - ',k)
+    print('\n\n\nWriting into reviews for product - ',k)
     con = soup.findAll("div", {"class":"reviews-pagination col-xs-4 col-lg-3"})
     for c in con:
         init = c.text
