@@ -5,13 +5,12 @@ Created on Fri Mar  6 13:49:19 2020
 @author: shail
 """
 
-import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup  # HTML data structure
 import requests
 import re
 from datetime import datetime
-from BestBuy_Scraping import getProductLinks,getTitles,getSKUID,getModelNo,getCurrentPrice,getOriginalPrice,getRating_Count,doTransform
+from BestBuy_Scraping import getProductLinks,getTitles,getSKUID,getModelNo,getCurrentPrice,getOriginalPrice,getRating_Count,doTransform,getReviews
 
 
 
@@ -93,8 +92,9 @@ if __name__ == "__main__":
         product_info.to_excel(writer)
         
         
-"""     WIP - Reviews format and manipulation still lil tricky... 
+"""     WIP - Reviews format and manipulation still lil tricky... especially storing RID number and appending on count 
     i=1
+    productreview = pd.DataFrame(columns=['SKUid','Datetime','RID','Review','Helpful','Unhelpful'])
     print('\n\n\n################# Scraping and appending reviews  ################### ')
     for product in productlinks:                                                
         page_url = 'https://www.bestbuy.com/'+str(product)
@@ -108,12 +108,19 @@ if __name__ == "__main__":
             page_url_review = product[:5]+'/reviews/'+product[6:]
             page_url_review = page_url_review.split('.')[0]
             page_url_review = 'https://www.bestbuy.com/'+str(page_url_review)
-            productreview = getReviews(page_url_review,i,modelno[i-1],skuid[i-1])
-            with pd.ExcelWriter('reviews.xlsx',mode='a') as writer:  
-                product_info.to_excel(writer) 
+            productreview.append(getReviews(page_url_review,i,modelno[i-1],skuid[i-1]))
         else:
             continue 
         i+=1
+    productreview['Datetime'] = pd.to_datetime(data_reviews['Datetime'])
+    productreview['Date'] = pd.to_datetime(productreview['Datetime']).dt.date
+    productreview['Time'] = pd.to_datetime(productreview['Datetime']).dt.time
+    productreview['RID'] = data_reviews['RID'].str.split('-').str[-1]
+    productreview = productreview.sort_values(by=['Datetime'])
+    productreview = productreview.drop(['Datetime'],axis=1)
+    productreview = productreview.reset_index(drop=True)
     
+    with pd.ExcelWriter('reviews.xlsx',mode='a') as writer:  
+        product_info.to_excel(writer) 
 """    
     
