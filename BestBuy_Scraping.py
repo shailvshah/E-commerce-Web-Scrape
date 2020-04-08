@@ -17,7 +17,6 @@ def getTitles(soup):
     con = soup.findAll("h1", {"class":"heading-5 v-fw-regular"})                
     for c in con:
         titles = c.text
-
     return titles
 
 #get SKU id
@@ -83,6 +82,20 @@ def getRating_Count(soup):
     return ratings_count
 
 
+def getTotalReviewsCount(soup):
+    con = soup.find("span",{"class":"c-total-reviews"})
+    if not con:
+        reviewcount = 0
+    else:
+        reviewchar = con.text
+        reviewcount = re.findall('\d+',reviewchar)
+        if ',' in reviewcount:
+            reviewcount = reviewcount.replace(',','')
+            reviewcount = int(reviewcount)
+    return reviewcount
+        
+            
+
 #get individual product links!
 def getProductLinks(soup, total_pages,page_url, header):
     productlinks = []
@@ -135,9 +148,12 @@ def getReviews(page_url,k,modelname,sid):
         tot_reviews = init.split(" ")[5]
         tot_reviews = re.sub(r',','',str(tot_reviews))
         tot_reviews = int(tot_reviews)
-        r_icount = re.findall(r'-\d+',c.text)
-        r_icount = re.findall(r'\d+',str(r_icount))
-        r_icount = int(*r_icount)
+        if tot_reviews == 1:
+            r_icount = 1
+        else:
+            r_icount = re.findall(r'-\d+',c.text)
+            r_icount = re.findall(r'\d+',str(r_icount))
+            r_icount = int(*r_icount)
     print('\nNo. of reviews in product '+str(k)+' are '+str(tot_reviews))
     if tot_reviews<=r_icount:
         r_tot_pages = 1
@@ -232,7 +248,7 @@ def getReviews(page_url,k,modelname,sid):
         
 
 
-def doTransform(currentprice, actualprice, ratings_count):
+def doTransform(currentprice, actualprice, ratings_count,icount):
     star5 = []
     star4 = []
     star3 = []
@@ -337,6 +353,7 @@ if __name__ == "__main__":
     actualprice = []
     ratings_count = []
     todaydate = []
+    reviewscount = []
     #find all details per product one by one!
     i=1
     print('\n\n\n################# Scraping Individual Products Content ################### ')
@@ -351,7 +368,8 @@ if __name__ == "__main__":
         currentprice.append(getCurrentPrice(soup1))
         actualprice.append(getOriginalPrice(soup1))
         todaydate.append(datetime.date(datetime.now()))
-        if ratings_count[i-1] == '0.0':
+        reviewscount.append(getTotalReviewsCount(soup1))
+        if reviewscount[i-1] == 0:
             print('No Reviews Found!')
             productreview = pd.DataFrame(columns =['SKUid','Datetime','RID','Review','Helpful','Unhelpful'])
             productreview.to_excel("reviews_"+skuid[i-1]+str(datetime.date(datetime.now()))+".xlsx") 
